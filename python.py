@@ -1,106 +1,134 @@
 #!/usr/bin/env python3
-import os, time, sys, random
+import os, sys, time, random
 
-# Fake account template
-fake_account = {
-    "username": "",
-    "robux": 1000,
-    "password": "",
-    "recent_activity": [
-        ("Bought 'Starter Pack Gamepass'", -100),
-        ("Daily Login Bonus", +50),
-        ("Played 'Adopt Me!'", 0)
-    ]
-}
-
+# ---------- Helper Functions ----------
 def clear_screen():
     os.system("clear" if os.name == "posix" else "cls")
 
-def main_menu():
-    clear_screen()
-    print("=== Roblox Security Simulator ===")
-    print("1) Start password guessing")
-    print("2) Exit")
-    choice = input("Select: ")
-    return choice
-
-def guessing_animation(username, password_list):
-    clear_screen()
-    print(f"[+] Starting password guessing for user: {username}\n")
-    for i, pwd in enumerate(password_list, 1):
-        sys.stdout.write(f"\r[*] Trying password {i}/{len(password_list)}: {pwd}...")
+def slow_print(text, delay=0.03):
+    for c in text:
+        sys.stdout.write(c)
         sys.stdout.flush()
-        time.sleep(0.5)
-    correct = password_list[-1]
-    print(f"\n\n[+] Password found: {correct}\n")
-    fake_account["username"] = username
-    fake_account["password"] = correct
-    time.sleep(1)
+        time.sleep(delay)
+    print()
 
-def show_dashboard():
+def banner():
     clear_screen()
-    print(f"=== Roblox Account Dashboard ===\n")
-    print(f"Username: {fake_account['username']}")
-    print(f"Robux Balance: {fake_account['robux']} 🪙")
-    print(f"Password: {fake_account['password']}")
-    print("\nRecent Activity:")
-    for action, amt in fake_account["recent_activity"]:
-        sign = "+" if amt > 0 else "-" if amt < 0 else ""
-        print(f"  {action:30} {sign}{abs(amt)} Robux" if amt != 0 else f"  {action}")
-    print("\nOptions:")
-    print(" 1) Change Password")
-    print(" 2) Add Fake Transaction")
-    print(" 3) Logout")
+    print(r"""
+██████╗  █████╗ ███████╗███████╗███████╗███████╗███████╗███████╗
+██╔══██╗██╔══██╗██╔════╝██╔════╝██╔════╝██╔════╝██╔════╝██╔════╝
+██████╔╝███████║███████╗███████╗█████╗  █████╗  █████╗  █████╗  
+██╔═══╝ ██╔══██║╚════██║╚════██║██╔══╝  ██╔══╝  ██╔══╝  ██╔══╝  
+██║     ██║  ██║███████║███████║███████╗███████╗███████╗███████╗
+╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚══════╝╚══════╝╚══════╝
+          ██████ SIMULATOR ██████
+""")
 
-def change_password():
-    new_pwd = input("Enter new password: ")
-    fake_account["password"] = new_pwd
-    print("[+] Password changed successfully!")
+# ---------- Fake Account Data ----------
+fake_account = {
+    "username": "",
+    "robux": 0,
+    "password": "",
+    "last_game": "",
+    "robux_spent": 0,
+    "last_gamepass": "",
+    "recent_activity": []
+}
+
+# ---------- Startup: Enter Fake Data ----------
+def enter_fake_data():
+    banner()
+    fake_account["username"] = input("Enter fake username: ")
+    fake_account["robux"] = int(input("Enter fake Robux balance: "))
+    fake_account["last_game"] = input("Enter last game played: ")
+    fake_account["robux_spent"] = int(input("Enter Robux spent in last game: "))
+    fake_account["last_gamepass"] = input("Enter last gamepass purchased: ")
+    pw = input("Enter the password (will be 'guessed'): ")
+    fake_account["password"] = pw
+    fake_account["recent_activity"] = [
+        (f"Bought '{fake_account['last_gamepass']}'", -fake_account["robux_spent"]),
+        (f"Played '{fake_account['last_game']}'", 0),
+        ("Daily Login Reward", +50)
+    ]
+    slow_print("\nFake account data saved! Preparing password guess simulation...\n", 0.05)
     time.sleep(1)
 
-def add_transaction():
-    item = input("Enter transaction description: ")
-    amt = int(input("Enter amount (+ for gain, - for spend): "))
-    fake_account["recent_activity"].insert(0, (item, amt))
-    fake_account["robux"] += amt
-    print("[+] Transaction added!\n")
+# ---------- Password Guess Simulation ----------
+def password_guessing():
+    clear_screen()
+    slow_print(f"[+] Starting password guessing for {fake_account['username']}...\n")
+    fake_passwords = [f"pass{i}{random.randint(100,999)}" for i in range(1, 100)]
+    fake_passwords.append(fake_account["password"])  # Last one is correct
+    for i, pwd in enumerate(fake_passwords, 1):
+        sys.stdout.write(f"\r[*] Trying password {i}/{len(fake_passwords)}: {pwd}  ")
+        sys.stdout.flush()
+        time.sleep(0.05)
+    print(f"\n\n[+] Password found: {fake_account['password']}\n")
     time.sleep(1)
 
-def guessing_flow():
-    username = input("Enter username: ")
-    pw_input = input("Enter passwords (comma-separated, last is correct): ")
-    password_list = [p.strip() for p in pw_input.split(",") if p.strip()]
-    if not password_list:
-        print("[-] No passwords entered!")
-        time.sleep(2)
-        return
-    guessing_animation(username, password_list)
+# ---------- Fake Authenticator / Email Guess ----------
+def auth_guess():
+    clear_screen()
+    slow_print("[*] Attempting authenticator & email verification...\n")
+    for i in range(30):
+        bar = "#" * (i+1) + "-" * (30-i-1)
+        sys.stdout.write(f"\r[{bar}] {i*3}%")
+        sys.stdout.flush()
+        time.sleep(0.05)
+    print("\n[+] Authenticator & email verified successfully!\n")
+    time.sleep(1)
+
+# ---------- Fake Dashboard ----------
+def show_dashboard():
     while True:
-        show_dashboard()
+        clear_screen()
+        banner()
+        print(f"Username: {fake_account['username']}")
+        print(f"Robux Balance: {fake_account['robux']} 🪙")
+        print(f"Password: {fake_account['password']}")
+        print(f"Last Game Played: {fake_account['last_game']}")
+        print(f"Robux Spent Last Game: {fake_account['robux_spent']}")
+        print(f"Last Gamepass: {fake_account['last_gamepass']}")
+        print("\nRecent Activity:")
+        for action, amt in fake_account["recent_activity"]:
+            sign = "+" if amt > 0 else "-" if amt < 0 else ""
+            print(f"  {action:30} {sign}{abs(amt)} Robux" if amt != 0 else f"  {action}")
+        print("\nOptions:")
+        print("1) Change Password")
+        print("2) Add Fake Transaction / Gamepass")
+        print("3) Exit Dashboard")
         choice = input("\nSelect option: ")
         if choice == "1":
-            change_password()
+            new_pw = input("Enter new password: ")
+            fake_account["password"] = new_pw
+            slow_print("[+] Password changed successfully!\n", 0.05)
+            time.sleep(1)
         elif choice == "2":
-            add_transaction()
+            desc = input("Transaction / Gamepass description: ")
+            amt = int(input("Amount (+ for gain, - for spend): "))
+            fake_account["recent_activity"].insert(0, (desc, amt))
+            fake_account["robux"] += amt
+            slow_print("[+] Transaction added!\n", 0.05)
+            time.sleep(1)
         elif choice == "3":
-            print("[*] Logging out...")
+            slow_print("[*] Logging out of dashboard...\n", 0.05)
             time.sleep(1)
             break
         else:
-            print("Invalid choice!")
+            slow_print("[-] Invalid choice!\n", 0.05)
             time.sleep(1)
 
+# ---------- Main Flow ----------
 def main():
-    while True:
-        choice = main_menu()
-        if choice == "1":
-            guessing_flow()
-        elif choice == "2":
-            print("Goodbye!")
-            break
-        else:
-            print("Invalid choice!")
-            time.sleep(1)
+    clear_screen()
+    banner()
+    slow_print("Welcome to PasswordGuesser Simulator!\n", 0.05)
+    time.sleep(1)
+    enter_fake_data()
+    password_guessing()
+    auth_guess()
+    show_dashboard()
+    slow_print("Thank you for using PasswordGuesser Simulator!\n", 0.05)
 
 if __name__ == "__main__":
     main()
